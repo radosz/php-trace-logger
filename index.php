@@ -1,0 +1,268 @@
+<?php
+if (isset($_GET['fetch'])) {
+    header('Content-Type: text/plain');
+    $files = glob('/tmp/profiles/trace.*');
+    $output = [];
+    
+    foreach ($files as $file) {
+        $lastLine = trim(shell_exec("tail -n 50 " . escapeshellarg($file)));
+        if (!empty($lastLine)) {
+            $output[] = $lastLine;
+        }
+    }
+    
+    echo implode("\n", $output);
+    exit;
+}
+
+if (isset($_GET['delete'])) {
+    shell_exec('rm -f /tmp/profiles/*');
+    echo "deleted";
+    exit;
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Trace Log Viewer</title>
+    <style>
+        body { font-family: monospace; background: #222; color: #eee; }
+        #logContainer { 
+            width: 90%; 
+            margin: 20px auto; 
+            max-height:80vh; 
+            overflow-y: auto; 
+            border:1px solid #444; 
+            background:#111; 
+            padding:10px; 
+        }
+        .filter-container {
+            width: 90%;
+            margin: 20px auto;
+            text-align: center;
+        }
+        #filterInput {
+            padding: 8px;
+            width: 400px;
+            background: #333;
+            border: 1px solid #444;
+            color: #eee;
+            border-radius: 4px;
+        }
+        .button {
+            padding: 8px 15px;
+            margin-left: 10px;
+            background: #444;
+            border: none;
+            color: #eee;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .button:hover {
+            background: #555;
+        }
+        .delete-btn {
+            background: #a00;
+        }
+        .delete-btn:hover {
+            background: #c00;
+        }
+        .filter-help {
+            color: #888;
+            font-size: 0.8em;
+            margin: 5px 0;
+            text-align: center;
+        }
+        #spaceInfo {
+            color: #888;
+            text-align: center;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h2 style="text-align:center;">Trace Log Viewer</h2>
+    <div id="spaceInfo">Loading space info...</div>
+    <div class="filter-container">
+        <input type="text" id="filterInput" placeholder="Filter logs by string...">
+        <button class="button" onclick="clearLogs()">Clear Logs</button>
+        <button class="button delete-btn" onclick="deleteProfiles()">Delete Profiles</button>
+        <div class="filter-help">
+            Use && for AND, || for OR (e.g., "error && database || warning && server")<br>
+            Use -a N to show N lines after match, -b N to show N lines before match (e.g., "error -a 10 -b 5")
+        </div>
+    </div>
+    <pre id="logContainer"></pre>
+  
+    <script>
+        const logs = new Set();
+        const uLogs = new Set();
+        var lineNumber = 1;
+        let filterValue = '';
+
+        function updateSpaceInfo() {
+            fetch('profiles.php?space=1')
+                .then(response => response.text())
+                .then(response => {
+                    document.getElementById('spaceInfo').textContent = 'Profiles directory size: '+ response;
+                });
+        }
+
+        function deleteProfiles() {
+            if (confirm('Are you sure you want to delete all profile files?')) {
+                fetch('index.php?delete=1')
+                    .then(response => response.text())
+                    .then(data => {
+                        if (data === 'deleted') {
+                            clearLogs();
+                            updateSpaceInfo();
+                        }
+                    });
+            }
+        }
+
+        function parseFilterExpression(filterStr) {
+            let after = 0;
+            let before = 0;
+            let searchTerms = filterStr;
+
+            // Extract -a parameter
+            const afterMatch = filterStr.match(/-a\s+(\d+)/);
+            if (afterMatch) {
+                after = parseInt(afterMatch[1]);
+                searchTerms = searchTerms.replace(/-a\s+\d+/, '');
+            }
+
+            // Extract -b parameter
+            const beforeMatch = filterStr.match(/-b\s+(\d+)/);
+            if (beforeMatch) {
+                before = parseInt(beforeMatch[1]);
+                searchTerms = searchTerms.replace(/-b\s+\d+/, '');
+            }
+
+            const orParts = searchTerms.trim().split('||').map(p => p.trim());
+            return {
+                orParts: orParts.map(orPart => {
+                    return orPart.split('&&').map(p => p.trim().toLowerCase());
+                }),
+                after: after,
+                before: before
+            };
+        }
+
+        function matchesFilter(logs, currentIndex, filterExpr) {
+            if (!filterExpr.orParts.length || (filterExpr.orParts.length === 1 && !filterExpr.orParts[0][0])) {
+                return true;
+            }
+
+            const currentLog = logs[currentIndex].toLowerCase();
+            
+            // Check if the current line matches the filter
+            const matches = filterExpr.orParts.some(andGroup => {
+                return andGroup.every(term => currentLog.includes(term));
+            });
+
+            // If current line matches, always include it
+            if (matches) {
+                return true;
+            }
+
+            // Only look for context if we have -a or -b parameters
+            if (filterExpr.after === 0 && filterExpr.before === 0) {
+                return false;
+            }
+
+            // Look for preceding match for -a parameter
+            for (let i = currentIndex - 1; i >= 0; i--) {
+                const contextLog = logs[i].toLowerCase();
+                if (filterExpr.orParts.some(andGroup => andGroup.every(term => contextLog.includes(term)))) {
+                    // If we found a match, check if current line is within the 'after' range
+                    const distance = currentIndex - i;
+                    if (distance > 0 && distance <= filterExpr.after) {
+                        return true;
+                    }
+                    break; // Stop searching once we find the nearest match
+                }
+            }
+
+            // Look for following match for -b parameter
+            if (filterExpr.before > 0) {
+                for (let i = currentIndex + 1; i < logs.length; i++) {
+                    const contextLog = logs[i].toLowerCase();
+                    if (filterExpr.orParts.some(andGroup => andGroup.every(term => contextLog.includes(term)))) {
+                        // If we found a match, check if current line is within the 'before' range
+                        const distance = i - currentIndex;
+                        if (distance > 0 && distance <= filterExpr.before) {
+                            return true;
+                        }
+                        break; // Stop searching once we find the nearest match
+                    }
+                }
+            }
+
+            return false;
+        }
+
+
+        document.getElementById('filterInput').addEventListener('input', function(e) {
+            filterValue = e.target.value;
+            refreshDisplay();
+        });
+
+        function clearLogs() {
+            lineNumber=1;
+            logs.clear();
+            document.getElementById('logContainer').textContent = '';
+        }
+
+        function refreshDisplay() {
+            const logContainer = document.getElementById('logContainer');
+            const filterInput = document.getElementById('filterInput');
+            logContainer.textContent = '';
+            
+            const filterExpression = parseFilterExpression(filterInput.value);
+            const logsArray = Array.from(logs);
+            
+            const filteredLogs = logsArray
+                .filter((log, index) => matchesFilter(logsArray, index, filterExpression))
+                .join('\n');
+            
+            logContainer.textContent = filteredLogs;
+        }
+
+        function fetchLog() {
+            fetch('index.php?fetch=1')
+                .then(response => response.text())
+                .then(data => {
+                    if (data.trim().length > 0) {
+                        const logContainer = document.getElementById("logContainer");
+                        const lines = data.trim().split('\n');
+                        let newLogsAdded = false;
+                        
+                        lines.forEach(line => {
+                            if (!uLogs.has(line) && !line.includes("shell_exec") && !line.includes("debug-sql") && line.includes("/project")) {
+                                uLogs.add(line);
+                                logs.add((lineNumber++) + " " + line);
+                                newLogsAdded = true;
+                            }
+                        });
+
+                        if (newLogsAdded) {
+                            refreshDisplay();
+                            logContainer.scrollTop = logContainer.scrollHeight;
+                        }
+
+                    }
+                })
+                .catch(err => console.error('Error fetching log:', err));
+        }
+    
+        // Initial calls
+        updateSpaceInfo();
+        setInterval(updateSpaceInfo, 5000); // Update space info every 5 seconds
+        setInterval(fetchLog, 1000);
+        fetchLog();
+    </script>
+</body>
+</html>
