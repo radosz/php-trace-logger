@@ -1,7 +1,8 @@
 <?php
+$file_dir='/var/www/html/logs/*';
 if (isset($_GET['fetch'])) {
     header('Content-Type: text/plain');
-    $files = glob('/tmp/profiles/trace.*');
+    $files = glob($file_dir);
     $output = [];
     
     foreach ($files as $file) {
@@ -16,7 +17,7 @@ if (isset($_GET['fetch'])) {
 }
 
 if (isset($_GET['delete'])) {
-    shell_exec('rm -f /tmp/profiles/*');
+    shell_exec('rm -f '. $file_dir);
     echo "deleted";
     exit;
 }
@@ -241,11 +242,9 @@ if (isset($_GET['delete'])) {
                         let newLogsAdded = false;
                         
                         lines.forEach(line => {
-                            if (!uLogs.has(line) && !line.includes("shell_exec") && !line.includes("debug-sql") && line.includes("/project")) {
-                                uLogs.add(line);
-                                logs.add((lineNumber++) + " " + line);
-                                newLogsAdded = true;
-                            }
+                           uLogs.add(line);
+                           logs.add((lineNumber++) + " " + line);
+                           newLogsAdded = true;
                         });
 
                         if (newLogsAdded) {

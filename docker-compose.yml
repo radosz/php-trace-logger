@@ -1,0 +1,10 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: php-trace-logger:latest
+    container_name: php-trace-logger
+    ports:
+      - "9090:9000"
+    
