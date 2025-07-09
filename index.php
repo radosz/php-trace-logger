@@ -164,42 +164,55 @@ if (isset($_GET['delete'])) {
             word-wrap: break-word;
         }
         
-        /* Mobile optimizations */
+        /* Mobile optimizations - Compact view */
         @media (max-width: 768px) {
             .header {
-                padding: 10px;
+                padding: 8px;
             }
             
             .header h2 {
-                font-size: 1.1em;
-                margin-bottom: 10px;
+                display: none; /* Hide title on mobile */
+            }
+            
+            #spaceInfo {
+                display: none; /* Hide profile size info on mobile */
+            }
+            
+            .filter-container {
+                margin: 0;
+                max-width: none;
             }
             
             .input-row {
-                flex-direction: column;
-                align-items: stretch;
+                flex-direction: row;
+                align-items: center;
+                gap: 8px;
             }
             
             #filterInput {
-                min-width: unset;
-                width: 100%;
+                flex: 1;
+                min-width: 0;
+                padding: 10px;
+                font-size: 14px;
             }
             
             .button-group {
-                justify-content: center;
+                flex-shrink: 0;
+                gap: 8px;
             }
             
             .button {
-                flex: 1;
-                min-width: 120px;
+                padding: 10px 12px;
+                font-size: 13px;
+                white-space: nowrap;
             }
             
             .filter-help {
-                font-size: 0.75em;
+                display: none; /* Hide help text on mobile for more compact view */
             }
             
             .main-content {
-                padding: 10px;
+                padding: 8px;
             }
             
             #logContainer {
@@ -208,33 +221,63 @@ if (isset($_GET['delete'])) {
             }
         }
         
-        /* Small mobile devices */
+        /* Very small mobile devices - Ultra compact */
         @media (max-width: 480px) {
             .header {
-                padding: 8px;
+                padding: 6px;
             }
             
-            .header h2 {
-                font-size: 1em;
-            }
-            
-            .button {
-                padding: 10px 16px;
-                font-size: 13px;
+            .input-row {
+                gap: 6px;
             }
             
             #filterInput {
-                padding: 10px;
+                padding: 8px;
                 font-size: 13px;
             }
             
+            .button {
+                padding: 8px 10px;
+                font-size: 12px;
+            }
+            
             .main-content {
-                padding: 8px;
+                padding: 6px;
             }
             
             #logContainer {
                 font-size: 11px;
                 padding: 8px;
+            }
+        }
+        
+        /* Extra small devices - Maximum compactness */
+        @media (max-width: 360px) {
+            .header {
+                padding: 4px;
+            }
+            
+            .input-row {
+                gap: 4px;
+            }
+            
+            #filterInput {
+                padding: 6px;
+                font-size: 12px;
+            }
+            
+            .button {
+                padding: 6px 8px;
+                font-size: 11px;
+            }
+            
+            .main-content {
+                padding: 4px;
+            }
+            
+            #logContainer {
+                font-size: 10px;
+                padding: 6px;
             }
         }
     </style>
