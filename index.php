@@ -393,6 +393,7 @@ if (isset($_GET['delete'])) {
         function refreshDisplay() {
             const logContainer = document.getElementById('logContainer');
             const filterInput = document.getElementById('filterInput');
+            
             logContainer.textContent = '';
             
             const filterExpression = parseFilterExpression(filterInput.value);
@@ -412,24 +413,31 @@ if (isset($_GET['delete'])) {
                     if (data.trim().length > 0) {
                         const logContainer = document.getElementById("logContainer");
                         const lines = data.trim().split('\n');
-                        let newLogsAdded = false;
+                        
+                        // Check if user was at bottom before adding new logs (check both container and window)
+                        const containerAtBottom = logContainer.scrollHeight - logContainer.scrollTop <= logContainer.clientHeight + 5;
+                        const windowAtBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 5;
+                        const shouldAutoScroll = document.getElementById('autoScroll').checked || containerAtBottom || windowAtBottom;
                         
                         lines.forEach(line => {
                            // Only add if this exact log line doesn't already exist
                            if (!uLogs.has(line)) {
                                uLogs.add(line);
                                logs.add((lineNumber++) + " " + line);
-                               newLogsAdded = true;
+                               
+                               // Refresh display and auto-scroll immediately for each new line
+                               refreshDisplay();
+                               
+                               if (shouldAutoScroll) {
+                                   // Use setTimeout to ensure DOM has updated
+                                   setTimeout(() => {
+                                       // Scroll both the container and the main window
+                                       logContainer.scrollTop = logContainer.scrollHeight;
+                                       window.scrollTo(0, document.body.scrollHeight);
+                                   }, 0);
+                               }
                            }
                         });
-
-                        if (newLogsAdded) {
-                            refreshDisplay();
-                            // Auto-scroll only if checkbox is checked
-                            if (document.getElementById('autoScroll').checked) {
-                                logContainer.scrollTop = logContainer.scrollHeight;
-                            }
-                        }
 
                     }
                 })
