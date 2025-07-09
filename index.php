@@ -216,6 +216,7 @@ if (isset($_GET['delete'])) {
         function clearLogs() {
             lineNumber=1;
             logs.clear();
+            uLogs.clear();
             document.getElementById('logContainer').textContent = '';
         }
 
@@ -244,9 +245,12 @@ if (isset($_GET['delete'])) {
                         let newLogsAdded = false;
                         
                         lines.forEach(line => {
-                           uLogs.add(line);
-                           logs.add((lineNumber++) + " " + line);
-                           newLogsAdded = true;
+                           // Only add if this exact log line doesn't already exist
+                           if (!uLogs.has(line)) {
+                               uLogs.add(line);
+                               logs.add((lineNumber++) + " " + line);
+                               newLogsAdded = true;
+                           }
                         });
 
                         if (newLogsAdded) {
