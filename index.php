@@ -1,5 +1,7 @@
 <?php
-$file_dir='/var/www/html/logs/*';
+// Get logs directory from environment variable or use default
+$logs_dir = getenv('LOGS_DIR') ?: '/var/www/html/logs';
+$file_dir = rtrim($logs_dir, '/') . '/*';
 if (isset($_GET['fetch'])) {
     header('Content-Type: text/plain');
     $files = glob($file_dir);
