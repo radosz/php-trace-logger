@@ -29,74 +29,237 @@ if (isset($_GET['delete'])) {
 <head>
     <meta charset="UTF-8">
     <title>Trace Log Viewer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { font-family: monospace; background: #222; color: #eee; }
-        #logContainer { 
-            width: 90%; 
-            margin: 20px auto; 
-            max-height:80vh; 
-            overflow-y: auto; 
-            border:1px solid #444; 
-            background:#111; 
-            padding:10px; 
+        * {
+            box-sizing: border-box;
         }
-        .filter-container {
-            width: 90%;
-            margin: 20px auto;
-            text-align: center;
+        
+        body { 
+            font-family: monospace; 
+            background: #222; 
+            color: #eee; 
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
-        #filterInput {
-            padding: 8px;
-            width: 400px;
+        
+        .header {
             background: #333;
-            border: 1px solid #444;
-            color: #eee;
-            border-radius: 4px;
+            padding: 15px;
+            border-bottom: 1px solid #444;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            flex-shrink: 0;
         }
-        .button {
-            padding: 8px 15px;
-            margin-left: 10px;
-            background: #444;
-            border: none;
-            color: #eee;
-            cursor: pointer;
-            border-radius: 4px;
-        }
-        .button:hover {
-            background: #555;
-        }
-        .delete-btn {
-            background: #a00;
-        }
-        .delete-btn:hover {
-            background: #c00;
-        }
-        .filter-help {
-            color: #888;
-            font-size: 0.8em;
-            margin: 5px 0;
+        
+        .header h2 {
+            margin: 0 0 15px 0;
             text-align: center;
+            font-size: 1.2em;
         }
+        
         #spaceInfo {
             color: #888;
             text-align: center;
-            margin: 10px 0;
+            margin: 0 0 15px 0;
+            font-size: 0.9em;
+        }
+        
+        .filter-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .input-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        #filterInput {
+            flex: 1;
+            min-width: 200px;
+            padding: 12px;
+            background: #444;
+            border: 1px solid #555;
+            color: #eee;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        #filterInput:focus {
+            outline: none;
+            border-color: #666;
+            background: #555;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .button {
+            padding: 12px 20px;
+            background: #555;
+            border: none;
+            color: #eee;
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 14px;
+            white-space: nowrap;
+            transition: background-color 0.2s;
+        }
+        
+        .button:hover {
+            background: #666;
+        }
+        
+        .button:active {
+            background: #444;
+        }
+        
+        .delete-btn {
+            background: #a00;
+        }
+        
+        .delete-btn:hover {
+            background: #c00;
+        }
+        
+        .filter-help {
+            color: #888;
+            font-size: 0.8em;
+            margin: 10px 0 0 0;
+            text-align: center;
+            line-height: 1.4;
+        }
+        
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            min-height: 0;
+        }
+        
+        #logContainer { 
+            flex: 1;
+            overflow-y: auto;
+            border: 1px solid #444;
+            background: #111;
+            padding: 15px;
+            border-radius: 6px;
+            font-size: 13px;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            .header {
+                padding: 10px;
+            }
+            
+            .header h2 {
+                font-size: 1.1em;
+                margin-bottom: 10px;
+            }
+            
+            .input-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            #filterInput {
+                min-width: unset;
+                width: 100%;
+            }
+            
+            .button-group {
+                justify-content: center;
+            }
+            
+            .button {
+                flex: 1;
+                min-width: 120px;
+            }
+            
+            .filter-help {
+                font-size: 0.75em;
+            }
+            
+            .main-content {
+                padding: 10px;
+            }
+            
+            #logContainer {
+                font-size: 12px;
+                padding: 10px;
+            }
+        }
+        
+        /* Small mobile devices */
+        @media (max-width: 480px) {
+            .header {
+                padding: 8px;
+            }
+            
+            .header h2 {
+                font-size: 1em;
+            }
+            
+            .button {
+                padding: 10px 16px;
+                font-size: 13px;
+            }
+            
+            #filterInput {
+                padding: 10px;
+                font-size: 13px;
+            }
+            
+            .main-content {
+                padding: 8px;
+            }
+            
+            #logContainer {
+                font-size: 11px;
+                padding: 8px;
+            }
         }
     </style>
 </head>
 <body>
-    <h2 style="text-align:center;">Trace Log Viewer</h2>
-    <div id="spaceInfo">Loading space info...</div>
-    <div class="filter-container">
-        <input type="text" id="filterInput" placeholder="Filter logs by string...">
-        <button class="button" onclick="clearLogs()">Clear Logs</button>
-        <button class="button delete-btn" onclick="deleteProfiles()">Delete Profiles</button>
-        <div class="filter-help">
-            Use && for AND, || for OR (e.g., "error && database || warning && server")<br>
-            Use -a N to show N lines after match, -b N to show N lines before match (e.g., "error -a 10 -b 5")
+    <div class="header">
+        <h2>Trace Log Viewer</h2>
+        <div id="spaceInfo">Loading space info...</div>
+        <div class="filter-container">
+            <div class="input-row">
+                <input type="text" id="filterInput" placeholder="Filter logs by string...">
+                <div class="button-group">
+                    <button class="button" onclick="clearLogs()">Clear Logs</button>
+                    <button class="button delete-btn" onclick="deleteProfiles()">Delete Profiles</button>
+                </div>
+            </div>
+            <div class="filter-help">
+                Use && for AND, || for OR (e.g., "error && database || warning && server")<br>
+                Use -a N to show N lines after match, -b N to show N lines before match (e.g., "error -a 10 -b 5")
+            </div>
         </div>
     </div>
-    <pre id="logContainer"></pre>
+    <div class="main-content">
+        <pre id="logContainer"></pre>
+    </div>
   
     <script>
         const logs = new Set();
