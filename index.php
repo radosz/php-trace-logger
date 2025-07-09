@@ -164,18 +164,18 @@ if (isset($_GET['delete'])) {
             word-wrap: break-word;
         }
         
-        /* Mobile optimizations - Compact view */
-        @media (max-width: 768px) {
+        /* Compact mode for screens smaller than 1024x768 */
+        @media (max-width: 1023px), (max-height: 767px) {
             .header {
-                padding: 8px;
+                padding: 6px;
             }
             
             .header h2 {
-                display: none; /* Hide title on mobile */
+                display: none; /* Hide title in compact mode */
             }
             
             #spaceInfo {
-                display: none; /* Hide profile size info on mobile */
+                display: none; /* Hide space info in compact mode */
             }
             
             .filter-container {
@@ -186,59 +186,29 @@ if (isset($_GET['delete'])) {
             .input-row {
                 flex-direction: row;
                 align-items: center;
-                gap: 8px;
+                gap: 6px;
             }
             
             #filterInput {
                 flex: 1;
                 min-width: 0;
-                padding: 10px;
-                font-size: 14px;
+                padding: 6px;
+                font-size: 12px;
             }
             
             .button-group {
                 flex-shrink: 0;
-                gap: 8px;
+                gap: 6px;
             }
             
             .button {
-                padding: 10px 12px;
-                font-size: 13px;
+                padding: 6px 10px;
+                font-size: 11px;
                 white-space: nowrap;
             }
             
             .filter-help {
-                display: none; /* Hide help text on mobile for more compact view */
-            }
-            
-            .main-content {
-                padding: 8px;
-            }
-            
-            #logContainer {
-                font-size: 12px;
-                padding: 10px;
-            }
-        }
-        
-        /* Very small mobile devices - Ultra compact */
-        @media (max-width: 480px) {
-            .header {
-                padding: 6px;
-            }
-            
-            .input-row {
-                gap: 6px;
-            }
-            
-            #filterInput {
-                padding: 8px;
-                font-size: 13px;
-            }
-            
-            .button {
-                padding: 8px 10px;
-                font-size: 12px;
+                display: none; /* Hide help text in compact mode */
             }
             
             .main-content {
@@ -247,37 +217,8 @@ if (isset($_GET['delete'])) {
             
             #logContainer {
                 font-size: 11px;
-                padding: 8px;
-            }
-        }
-        
-        /* Extra small devices - Maximum compactness */
-        @media (max-width: 360px) {
-            .header {
-                padding: 4px;
-            }
-            
-            .input-row {
-                gap: 4px;
-            }
-            
-            #filterInput {
                 padding: 6px;
-                font-size: 12px;
-            }
-            
-            .button {
-                padding: 6px 8px;
-                font-size: 11px;
-            }
-            
-            .main-content {
-                padding: 4px;
-            }
-            
-            #logContainer {
-                font-size: 10px;
-                padding: 6px;
+                line-height: 1.3;
             }
         }
     </style>
