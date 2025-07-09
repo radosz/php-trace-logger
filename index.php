@@ -105,6 +105,21 @@ if (isset($_GET['delete'])) {
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            flex-shrink: 0;
+        }
+        
+        .checkbox-label input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
         }
         
         .button {
@@ -207,6 +222,11 @@ if (isset($_GET['delete'])) {
                 white-space: nowrap;
             }
             
+            .checkbox-label input[type="checkbox"] {
+                width: 14px;
+                height: 14px;
+            }
+            
             .filter-help {
                 display: none; /* Hide help text in compact mode */
             }
@@ -229,6 +249,9 @@ if (isset($_GET['delete'])) {
         <div id="spaceInfo">Loading space info...</div>
         <div class="filter-container">
             <div class="input-row">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="autoScroll" checked title="Auto-scroll to bottom when new logs arrive">
+                </label>
                 <input type="text" id="filterInput" placeholder="Filter logs by string...">
                 <div class="button-group">
                     <button class="button" onclick="clearLogs()">Clear Logs</button>
@@ -402,7 +425,10 @@ if (isset($_GET['delete'])) {
 
                         if (newLogsAdded) {
                             refreshDisplay();
-                            logContainer.scrollTop = logContainer.scrollHeight;
+                            // Auto-scroll only if checkbox is checked
+                            if (document.getElementById('autoScroll').checked) {
+                                logContainer.scrollTop = logContainer.scrollHeight;
+                            }
                         }
 
                     }
